@@ -6,12 +6,14 @@ function getPhotos(photosData) {
     }
 }
 
+
 function getUser(userDate) {
     if (userDate.length == 0) {
         $("#login").show();
     }
     else{
         $("#upload").show();
+        $("#logout").show();
         $.get("/photos", getPhotos);
     }
 }

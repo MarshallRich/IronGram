@@ -1,6 +1,7 @@
 package com.theironyard.entities;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 
@@ -20,10 +21,9 @@ public class Photo {
     @ManyToOne
     User recipient;
 
-    @Column(nullable = false)
+    @NotNull
     String filename;
 
-    @Column
     LocalDateTime time;
 
     public Photo() {

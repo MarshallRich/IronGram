@@ -7,7 +7,6 @@ import com.theironyard.services.UserRepository;
 import com.theironyard.utils.PasswordStorage;
 import org.h2.tools.Server;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,7 +71,7 @@ public class IronGramController {
     }
 
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
-    public Photo upload(MultipartFile photo, HttpSession session, HttpServletResponse response) throws Exception {
+    public Photo upload(MultipartFile photo, String recipient, HttpSession session, HttpServletResponse response) throws Exception {
         String username = (String) session.getAttribute("username");
         if (username == null){
             throw new Exception("Not Logged in.");
@@ -83,7 +83,7 @@ public class IronGramController {
         FileOutputStream fos = new FileOutputStream(photoFile);
         fos.write(photo.getBytes());
 
-        Photo p = new Photo(user, null, photoFile.getName());
+        Photo p = new Photo(user, (users.findByName(recipient) == null) ? null : users.findByName(recipient), photoFile.getName());
         photos.save(p);
 
         response.sendRedirect("/");
@@ -91,16 +91,35 @@ public class IronGramController {
     }
 
     @RequestMapping(path = "/photos", method = RequestMethod.GET)
-    public List<Photo> showPhotos(){
-        List<Photo> listPhotos = (List<Photo>) photos.findAll();
-        for (Photo photo: listPhotos) {
+    public List<Photo> showPhotos(HttpSession session){
+        User user = users.findByName((String) session.getAttribute("username"));
+        List<Photo> allPhotos = (List<Photo>) photos.findAll();
+        List<Photo> listPhotos = photos.findByRecipient(user);
+
+        for (Photo photo: allPhotos) {
+            if (photo.getRecipient() == null) {
+                listPhotos.add(photo);
+            }
+        }
+
+        for (Photo photo : listPhotos) {
             if (photo.getTime() == null) {
                 photo.setTime(LocalDateTime.now());
+                photos.save(photo);
             }
             if (LocalDateTime.now().isAfter(photo.getTime().plusSeconds(10))){
+
+                File f = new File("public/" + photo.getFilename());
+                f.delete();
                 photos.delete(photo);
             }
         }
-        return (List<Photo>) photos.findAll();
+        return listPhotos;
+    }
+
+    @RequestMapping(path = "/logout", method = RequestMethod.POST)
+    public void logout(HttpSession session, HttpServletResponse response) throws IOException {
+        session.invalidate();
+        response.sendRedirect("/");
     }
 }
