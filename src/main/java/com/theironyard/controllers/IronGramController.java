@@ -20,6 +20,7 @@ import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -91,6 +92,15 @@ public class IronGramController {
 
     @RequestMapping(path = "/photos", method = RequestMethod.GET)
     public List<Photo> showPhotos(){
+        List<Photo> listPhotos = (List<Photo>) photos.findAll();
+        for (Photo photo: listPhotos) {
+            if (photo.getTime() == null) {
+                photo.setTime(LocalDateTime.now());
+            }
+            if (LocalDateTime.now().isAfter(photo.getTime().plusSeconds(10))){
+                photos.delete(photo);
+            }
+        }
         return (List<Photo>) photos.findAll();
     }
 }

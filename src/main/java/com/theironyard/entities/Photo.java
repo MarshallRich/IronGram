@@ -1,6 +1,8 @@
 package com.theironyard.entities;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+
 
 /**
  * Created by MacLap on 3/15/16.
@@ -21,7 +23,18 @@ public class Photo {
     @Column(nullable = false)
     String filename;
 
+    @Column
+    LocalDateTime time;
+
     public Photo() {
+    }
+
+    public LocalDateTime getTime() {
+        return time;
+    }
+
+    public void setTime(LocalDateTime time) {
+        this.time = time;
     }
 
     public User getSender() {
